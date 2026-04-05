@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>온누리반 타이머</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Fredoka',sans-serif;-webkit-tap-highlight-color:transparent;}
+html,body{width:100%;height:100%;overflow:hidden;}
+body{background:#1a1a2e;display:flex;align-items:center;justify-content:center;}
+
+/* ── 배경 별 ── */
+#bgdeco{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+.bd{position:absolute;opacity:.15;animation:floatbd 6s ease-in-out infinite;}
+
+/* ── 선택화면 ── */
+#S{
+  position:relative;z-index:10;
+  width:100%;max-width:560px;padding:2rem 1.5rem;
+  display:flex;flex-direction:column;align-items:center;gap:2rem;
+}
+#S h1{
+  font-size:clamp(1.9rem,5.5vw,2.7rem);font-weight:800;color:#fff;
+  text-align:center;text-shadow:0 4px 18px rgba(0,0,0,.6);line-height:1.3;
+}
+.crow{display:flex;gap:1.4rem;width:100%;}
+.card{
+  flex:1;min-width:130px;border-radius:2rem;padding:2.2rem 1rem;
+  display:flex;flex-direction:column;align-items:center;gap:.9rem;
+  cursor:pointer;background:rgba(255,255,255,.07);border:3px solid transparent;
+  transition:transform .18s,background .2s,box-shadow .2s;user-select:none;
+}
+.card:hover{background:rgba(255,255,255,.14);transform:translateY(-4px);}
+.card:active{transform:scale(.93);}
+.cc{border-color:#feca57;box-shadow:0 0 28px rgba(254,202,87,.22);}
+.cg{border-color:#00b894;box-shadow:0 0 28px rgba(0,184,148,.22);}
+.ce{font-size:4.5rem;animation:bs 1.5s ease-in-out infinite;display:block;}
+.cl{font-size:1.5rem;font-weight:700;}
+.cc .cl{color:#feca57;} .cg .cl{color:#00b894;}
+
+/* ── 타이머화면 ── */
+#T{
+  position:relative;z-index:10;
+  width:100%;max-width:500px;padding:.6rem 1rem 1.2rem;
+  display:none;flex-direction:column;align-items:center;gap:.65rem;
+}
+
+/* 주변 이모티콘 (fixed 포지션, 링 주변 배치) */
+.er{
+  position:fixed;font-size:2rem;pointer-events:none;z-index:6;
+  opacity:0;transition:opacity .6s;
+  animation:floatbd 4s ease-in-out infinite;
+}
+.er.show{opacity:1;}
+
+/* 뒤로가기 */
+#bbtn{
+  position:absolute;top:.4rem;left:.7rem;
+  background:rgba(255,255,255,.11);border:none;border-radius:999px;
+  color:#fff;font-size:.92rem;font-weight:700;padding:.3rem .85rem;
+  cursor:pointer;z-index:20;transition:background .2s;
+}
+#bbtn:hover{background:rgba(255,255,255,.2);}
+#bbtn:active{transform:scale(.91);}
+
+/* 제목 */
+#ttl{
+  font-size:clamp(1.3rem,4vw,1.9rem);font-weight:800;
+  color:#feca57;text-align:center;margin-top:1.7rem;
+  text-shadow:0 2px 14px rgba(254,202,87,.45);
+}
+
+/* ── 링 크게 ── */
+.rw{
+  position:relative;width:310px;height:310px;
+  display:flex;align-items:center;justify-content:center;
+  filter:drop-shadow(0 0 30px rgba(254,202,87,.32));
+  flex-shrink:0;
+}
+.rw svg{position:absolute;top:0;left:0;}
+.rc{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.25rem;}
+#em{font-size:4rem;display:block;}
+#td{
+  font-size:4rem;font-weight:800;color:#fff;
+  min-width:155px;text-align:center;
+  text-shadow:0 2px 18px rgba(255,255,255,.22);
+  letter-spacing:.02em;
+}
+.prc{transition:stroke-dashoffset .4s linear,stroke .5s;transform:rotate(-90deg);transform-origin:50% 50%;}
+.grc{transition:stroke-dashoffset .4s linear,stroke .5s;transform:rotate(-90deg);transform-origin:50% 50%;filter:blur(7px);opacity:.38;}
+
+/* 빠른 버튼 */
+.qrow{display:flex;flex-wrap:wrap;justify-content:center;gap:.42rem;}
+.qb{
+  padding:.4rem .95rem;border-radius:999px;border:none;cursor:pointer;
+  font-size:.93rem;font-weight:700;font-family:'Fredoka',sans-serif;
+  transition:transform .1s,filter .15s;
+}
+.qb:hover{filter:brightness(1.14);}
+.qb:active{transform:scale(.88);}
+
+/* 조절 */
+.ar{display:flex;align-items:center;justify-content:center;gap:1.3rem;}
+.ab{
+  width:50px;height:50px;border-radius:50%;border:none;
+  font-size:1.85rem;font-weight:800;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Fredoka',sans-serif;
+  box-shadow:0 4px 12px rgba(0,0,0,.3);transition:transform .1s,filter .15s;
+}
+.ab:hover{filter:brightness(1.14);}
+.ab:active{transform:scale(.87);}
+#alb{font-size:1rem;font-weight:700;color:#dfe6e9;}
+
+/* 시작/리셋 */
+.cr{display:flex;gap:.85rem;width:100%;}
+#stb{
+  flex:1;padding:.85rem;border-radius:999px;border:none;
+  background:linear-gradient(135deg,#00b894,#00cec9);
+  color:#fff;font-size:1.15rem;font-weight:800;
+  font-family:'Fredoka',sans-serif;cursor:pointer;
+  box-shadow:0 4px 18px rgba(0,184,148,.45);
+  transition:transform .1s,box-shadow .15s;
+}
+#stb:hover{box-shadow:0 6px 22px rgba(0,184,148,.6);}
+#stb:active{transform:scale(.95);}
+#rsb{
+  padding:.85rem 1.1rem;border-radius:999px;border:none;
+  background:rgba(255,255,255,.11);color:#fff;
+  font-size:1.15rem;font-weight:700;
+  font-family:'Fredoka',sans-serif;cursor:pointer;
+  transition:transform .1s,background .15s;
+}
+#rsb:hover{background:rgba(255,255,255,.2);}
+#rsb:active{transform:scale(.95);}
+
+/* 완료 */
+#dm{font-size:1.75rem;font-weight:800;text-align:center;min-height:2rem;}
+
+/* 플래시 */
+#fl{position:fixed;inset:0;pointer-events:none;background:#ff4757;opacity:0;z-index:999;}
+.cp3{position:fixed;border-radius:2px;z-index:1000;animation:fall 1.9s linear forwards;}
+
+/* 키프레임 */
+@keyframes bs{0%,100%{transform:translateY(0);}50%{transform:translateY(-9px);}}
+@keyframes bf{0%,100%{transform:translateY(0);}50%{transform:translateY(-14px);}}
+@keyframes sk{0%,100%{transform:translateX(0) rotate(0deg);}25%{transform:translateX(-7px) rotate(-4deg);}75%{transform:translateX(7px) rotate(4deg);}}
+@keyframes ss{0%{transform:rotate(0deg) scale(1);}50%{transform:rotate(180deg) scale(1.35);}100%{transform:rotate(360deg) scale(1);}}
+@keyframes fp{0%,100%{opacity:0;}50%{opacity:.17;}}
+@keyframes fall{to{transform:translateY(115vh) rotate(420deg);opacity:0;}}
+@keyframes floatbd{0%,100%{transform:translateY(0) rotate(0deg);}40%{transform:translateY(-16px) rotate(5deg);}70%{transform:translateY(-7px) rotate(-3deg);}}
+
+.abs{animation:bs 1.5s ease-in-out infinite;}
+.abf{animation:bf .4s ease-in-out infinite;}
+.ask{animation:sk .35s ease-in-out infinite;}
+.ass{animation:ss 2s linear infinite;}
+.afl{animation:fp .5s ease-in-out infinite;}
+</style>
+</head>
+<body>
+
+<div id="fl"></div>
+<div id="bgdeco"></div>
+
+<!-- ══ 선택화면 ══ -->
+<div id="S">
+  <h1>🎀 타이머를 골라주세요! 🎀</h1>
+  <div class="crow">
+    <div class="card cc" onclick="goTimer('chick')">
+      <span class="ce">🐥</span>
+      <span class="cl">삐약이 모드</span>
+    </div>
+    <div class="card cg" onclick="goTimer('plant')">
+      <span class="ce">🌱</span>
+      <span class="cl">식물 모드</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 타이머화면 ══ -->
+<div id="T">
+  <button id="bbtn" onclick="goBack()">← 처음으로</button>
+  <div id="ttl">🐥 정리 시간~! 🐥</div>
+
+  <div class="rw" id="rw">
+    <svg width="310" height="310" viewBox="0 0 310 310">
+      <circle id="glr" class="grc" cx="155" cy="155" r="132"
+        stroke="#feca57" stroke-width="15" fill="none"
+        stroke-linecap="round" stroke-dasharray="829.38" stroke-dashoffset="829.38"/>
+      <circle id="bgr" cx="155" cy="155" r="132"
+        stroke="#2d2d5e" stroke-width="15" fill="none"/>
+      <circle id="pgr" class="prc" cx="155" cy="155" r="132"
+        stroke="#feca57" stroke-width="15" fill="none"
+        stroke-linecap="round" stroke-dasharray="829.38" stroke-dashoffset="829.38"/>
+    </svg>
+    <div class="rc">
+      <span id="em" class="abs">🐥</span>
+      <div id="td">0:00</div>
+    </div>
+  </div>
+
+  <div class="qrow">
+    <button class="qb" style="background:#6c5ce7;color:#fff;" onclick="addTime(30)">+30초</button>
+    <button class="qb" style="background:#a29bfe;color:#fff;" onclick="addTime(60)">+1분</button>
+    <button class="qb" style="background:#55efc4;color:#1a1a2e;" onclick="addTime(180)">+3분</button>
+    <button class="qb" style="background:#fd79a8;color:#fff;" onclick="addTime(300)">+5분</button>
+  </div>
+
+  <div class="ar">
+    <button class="ab" style="background:#e17055;color:#fff;" onclick="addTime(-10)">−</button>
+    <span id="alb">시간 조절</span>
+    <button class="ab" style="background:#00b894;color:#fff;" onclick="addTime(10)">+</button>
+  </div>
+
+  <div class="cr">
+    <button id="stb" onclick="toggleTimer()">▶ 시작</button>
+    <button id="rsb" onclick="resetTimer()">↻ 리셋</button>
+  </div>
+
+  <div id="dm"></div>
+</div>
+
+<script>
+var C = 829.38;
+var total=0, remain=0, running=false, tid=null, theme='chick';
+var erEls=[];
+
+/* ── 배경 장식 생성 ── */
+(function(){
+  var items=['⭐','🌟','✨','💫','🎵','🎶','🌈','🎨','🎯','💛','🌙','🪐','🌠','💥'];
+  var bg=document.getElementById('bgdeco');
+  for(var i=0;i<14;i++){
+    var d=document.createElement('div');
+    d.className='bd';
+    d.style.fontSize=(1+Math.random()*1.5)+'rem';
+    d.textContent=items[i%items.length];
+    d.style.left=(Math.random()*96)+'%';
+    d.style.top=(Math.random()*96)+'%';
+    d.style.animationDelay=(Math.random()*5)+'s';
+    d.style.animationDuration=(4+Math.random()*4)+'s';
+    bg.appendChild(d);
+  }
+})();
+
+/* ── 링 주변 이모티콘 배치 ── */
+var RING_EMOS = {
+  chick:['🐣','🌟','🎈','🍭','⭐','🎀','💛','🎊'],
+  plant:['🌸','🦋','🐝','🍀','🌼','🌺','✨','🐞']
+};
+
+function buildRingEmos(t){
+  /* 기존 제거 */
+  erEls.forEach(function(e){e.remove();});
+  erEls=[];
+
+  var list=RING_EMOS[t];
+  var cx=window.innerWidth/2;
+  var cy=window.innerHeight/2;
+  /* 링 반지름(155px) + 여백 */
+  var r=Math.min(window.innerWidth,window.innerHeight)*0.44;
+
+  for(var i=0;i<list.length;i++){
+    var el=document.createElement('div');
+    el.className='er';
+    var angle=(i/list.length)*2*Math.PI - Math.PI/2;
+    el.style.left=(cx+r*Math.cos(angle)-18)+'px';
+    el.style.top =(cy+r*Math.sin(angle)-18)+'px';
+    el.style.fontSize=(1.7+Math.random()*.7)+'rem';
+    el.style.animationDelay=(i*.18)+'s';
+    el.style.animationDuration=(3.2+i*.25)+'s';
+    el.textContent=list[i];
+    document.body.appendChild(el);
+    erEls.push(el);
+  }
+  /* 살짝 딜레이 후 fade in */
+  setTimeout(function(){
+    erEls.forEach(function(e){e.classList.add('show');});
+  },60);
+}
+
+function hideRingEmos(){
+  erEls.forEach(function(e){
+    e.classList.remove('show');
+    setTimeout(function(){e.remove();},600);
+  });
+  erEls=[];
+}
+
+/* ── 화면 전환 ── */
+function goTimer(t){
+  theme=t;
+  document.getElementById('S').style.display='none';
+  document.getElementById('T').style.display='flex';
+
+  if(t==='chick'){
+    document.body.style.background='#1a1a2e';
+    document.getElementById('ttl').style.color='#feca57';
+    document.getElementById('ttl').textContent='🐥 정리 시간~! 🐥';
+    document.getElementById('pgr').style.stroke='#feca57';
+    document.getElementById('glr').style.stroke='#feca57';
+    document.getElementById('bgr').style.stroke='#2d2d5e';
+    document.getElementById('td').style.color='#fff';
+    document.getElementById('alb').style.color='#dfe6e9';
+    document.getElementById('rw').style.filter='drop-shadow(0 0 30px rgba(254,202,87,.35))';
+    document.getElementById('stb').style.background='linear-gradient(135deg,#00b894,#00cec9)';
+  } else {
+    document.body.style.background='#0d2b1e';
+    document.getElementById('ttl').style.color='#55efc4';
+    document.getElementById('ttl').textContent='🌱 꽃을 피워봐요! 🌱';
+    document.getElementById('pgr').style.stroke='#55efc4';
+    document.getElementById('glr').style.stroke='#55efc4';
+    document.getElementById('bgr').style.stroke='#1b4a35';
+    document.getElementById('td').style.color='#c8fae8';
+    document.getElementById('alb').style.color='#81e6b5';
+    document.getElementById('rw').style.filter='drop-shadow(0 0 30px rgba(85,239,196,.35))';
+    document.getElementById('stb').style.background='linear-gradient(135deg,#00b894,#1dd1a1)';
+  }
+  buildRingEmos(t);
+  resetTimer();
+}
+
+function goBack(){
+  stopTimer();
+  hideRingEmos();
+  document.getElementById('T').style.display='none';
+  document.getElementById('S').style.display='flex';
+  document.body.style.background='#1a1a2e';
+}
+
+/* ── 타이머 로직 ── */
+function addTime(s){
+  var n=remain+s;
+  if(n<0){remain=0;total=0;}
+  else{remain=n;total=total+s>remain?total+s:remain;}
+  document.getElementById('dm').textContent='';
+  render(); urgency();
+}
+
+function toggleTimer(){if(running)stopTimer();else startTimer();}
+
+function startTimer(){
+  if(remain<=0)return;
+  running=true;
+  document.getElementById('stb').textContent='⏸ 멈춤';
+  tid=setInterval(function(){
+    remain--;render();urgency();
+    if(remain<=0){clearInterval(tid);running=false;done();}
+  },1000);
+}
+
+function stopTimer(){
+  running=false;clearInterval(tid);
+  document.getElementById('stb').textContent='▶ 계속';
+  document.getElementById('em').textContent=theme==='chick'?'🐥':'🌱';
+  document.getElementById('em').className='abs';
+}
+
+function resetTimer(){
+  stopTimer();total=0;remain=0;
+  document.getElementById('stb').textContent='▶ 시작';
+  document.getElementById('dm').textContent='';
+  document.getElementById('pgr').style.strokeDashoffset=C;
+  document.getElementById('glr').style.strokeDashoffset=C;
+  document.getElementById('td').textContent='0:00';
+  document.getElementById('em').textContent=theme==='chick'?'🐥':'🌱';
+  document.getElementById('em').className='abs';
+  var fl=document.getElementById('fl');fl.className='';fl.style.opacity='0';
+}
+
+function render(){
+  var m=Math.floor(remain/60),s=remain%60;
+  document.getElementById('td').textContent=m+':'+(s<10?'0':'')+s;
+  var off=C*(1-(total>0?remain/total:0));
+  document.getElementById('pgr').style.strokeDashoffset=off;
+  document.getElementById('glr').style.strokeDashoffset=off;
+}
+
+function urgency(){
+  if(remain===0)return;
+  var pct=total>0?remain/total:1;
+  var em=document.getElementById('em');
+  var fl=document.getElementById('fl');
+  fl.className='';fl.style.opacity='0';
+
+  /* 주변 이모티콘 반응 */
+  erEls.forEach(function(e,i){
+    if(pct<=0.15){
+      e.style.animationName='sk';
+      e.style.animationDuration='.3s';
+      e.style.fontSize='2.2rem';
+    } else if(pct<=0.33){
+      e.style.animationName='bf';
+      e.style.animationDuration='.5s';
+      e.style.fontSize='1.9rem';
+    } else {
+      e.style.animationName='floatbd';
+      e.style.animationDuration=(3.2+i*.25)+'s';
+      e.style.fontSize=(1.7+i*.03)+'rem';
+    }
+  });
+
+  if(theme==='chick'){
+    if(pct<=0.15){em.textContent='🔥🐥🔥';em.className='ask';fl.className='afl';}
+    else if(pct<=0.33){em.textContent='🐥💢';em.className='abf';}
+    else{em.textContent='🐥';em.className='abs';}
+  } else {
+    em.textContent=pct>.75?'🌱':pct>.5?'🌿':pct>.2?'🌷':'🌻';
+    em.className='abs';
+  }
+}
+
+function done(){
+  document.getElementById('stb').textContent='▶ 시작';
+  var dm=document.getElementById('dm'),em=document.getElementById('em');
+  var party=theme==='chick'?['🎉','🎊','⭐','🌟','💛','🎈','🥳','✨']:['🌺','🦋','🌸','✨','🌼','💚','🐝','🌈'];
+  erEls.forEach(function(e,i){
+    e.textContent=party[i%party.length];
+    e.style.animationName='ss';
+    e.style.animationDuration=(1+i*.12)+'s';
+    e.style.fontSize='2.3rem';
+    e.style.opacity='1';
+  });
+  if(theme==='chick'){
+    dm.textContent='🎉 정리 끝~! 🎉';dm.style.color='#feca57';
+    em.textContent='🎊';em.className='ass';
+  } else {
+    dm.textContent='🌺 활짝 피었어요! 🌺';dm.style.color='#55efc4';
+    em.textContent='🦋';em.className='ass';
+  }
+  confetti();
+}
+
+function confetti(){
+  var cols=['#feca57','#ff6b6b','#48dbfb','#55efc4','#fd79a8','#a29bfe'];
+  for(var i=0;i<50;i++){
+    (function(){
+      var p=document.createElement('div');p.className='cp3';
+      var sz=7+Math.random()*9;
+      p.style.width=sz+'px';p.style.height=sz+'px';
+      p.style.left=(Math.random()*100)+'vw';p.style.top='-14px';
+      p.style.background=cols[Math.floor(Math.random()*cols.length)];
+      p.style.animationDelay=(Math.random()*.9)+'s';
+      document.body.appendChild(p);
+      setTimeout(function(){p.remove();},2900);
+    })();
+  }
+}
+</script>
+</body>
+</html>
